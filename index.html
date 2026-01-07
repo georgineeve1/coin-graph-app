@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coin Graph App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Fredoka', sans-serif; }
+        /* Custom animations for fun interaction */
+        .pop-in { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        /* Hide number spinner arrows to keep UI clean */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; margin: 0; 
+        }
+    </style>
+</head>
+<body class="bg-blue-50 text-gray-800 h-screen flex flex-col overflow-hidden">
+
+    <header class="bg-white p-4 shadow-md text-center z-10 shrink-0">
+        <h1 class="text-3xl font-bold text-indigo-600 mb-2">🟡 Coin Graph Maker</h1>
+        <p class="text-xl text-gray-600">
+            1. Put the number of coins. &nbsp;&nbsp; 2. Pick a graph. &nbsp;&nbsp; 3. Press <strong>Generate!</strong>
+        </p>
+    </header>
+
+    <main class="flex-grow flex flex-col md:flex-row p-4 gap-4 h-full overflow-hidden">
+        
+        <section class="w-full md:w-1/3 bg-white rounded-3xl shadow-xl p-6 flex flex-col gap-6 overflow-y-auto">
+            
+            <div class="space-y-4">
+                <h2 class="text-2xl font-bold text-gray-700 border-b-2 border-gray-200 pb-2">How many coins?</h2>
+                
+                <div class="flex items-center gap-4 bg-red-50 p-3 rounded-2xl border-2 border-red-200">
+                    <div class="w-10 h-10 bg-red-400 rounded-full flex items-center justify-center text-white font-bold text-xl">A</div>
+                    <label class="text-xl font-bold flex-grow text-gray-700">Coin A</label>
+                    <input type="number" id="inputA" placeholder="0" min="0" 
+                        class="w-20 text-center text-2xl font-bold p-2 rounded-xl border-2 border-red-300 focus:outline-none focus:ring-4 ring-red-200"
+                        oninput="validity.valid||(value='');">
+                </div>
+
+                <div class="flex items-center gap-4 bg-blue-50 p-3 rounded-2xl border-2 border-blue-200">
+                    <div class="w-10 h-10 bg-blue-400 rounded-full flex items-center justify-center text-white font-bold text-xl">B</div>
+                    <label class="text-xl font-bold flex-grow text-gray-700">Coin B</label>
+                    <input type="number" id="inputB" placeholder="0" min="0" 
+                        class="w-20 text-center text-2xl font-bold p-2 rounded-xl border-2 border-blue-300 focus:outline-none focus:ring-4 ring-blue-200"
+                        oninput="validity.valid||(value='');">
+                </div>
+
+                <div class="flex items-center gap-4 bg-yellow-50 p-3 rounded-2xl border-2 border-yellow-200">
+                    <div class="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-sm">C</div>
+                    <label class="text-xl font-bold flex-grow text-gray-700">Coin C</label>
+                    <input type="number" id="inputC" placeholder="0" min="0" 
+                        class="w-20 text-center text-2xl font-bold p-2 rounded-xl border-2 border-yellow-300 focus:outline-none focus:ring-4 ring-yellow-200"
+                        oninput="validity.valid||(value='');">
+                </div>
+            </div>
+
+            <div>
+                <h2 class="text-2xl font-bold text-gray-700 border-b-2 border-gray-200 pb-2 mb-3">Which Graph?</h2>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="selectType('bar')" id="btn-bar" class="graph-btn p-3 rounded-xl border-4 border-gray-200 hover:bg-gray-50 transition font-bold text-gray-600">
+                        📊 Bar
+                    </button>
+                    <button onclick="selectType('picture')" id="btn-picture" class="graph-btn p-3 rounded-xl border-4 border-gray-200 hover:bg-gray-50 transition font-bold text-gray-600">
+                        🟡 Picture
+                    </button>
+                    <button onclick="selectType('pie')" id="btn-pie" class="graph-btn p-3 rounded-xl border-4 border-gray-200 hover:bg-gray-50 transition font-bold text-gray-600">
+                        🍕 Pie
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-auto flex flex-col gap-3">
+                <button onclick="generateGraph()" class="w-full bg-green-500 hover:bg-green-600 text-white text-3xl font-bold py-4 rounded-2xl shadow-lg transform active:scale-95 transition">
+                    Generate Graph!
+                </button>
+                <button onclick="restartApp()" class="w-full bg-white border-4 border-gray-200 text-gray-500 hover:text-red-500 hover:border-red-200 font-bold py-3 rounded-2xl transition">
+                    🔄 Restart
+                </button>
+            </div>
+            
+            <div id="error-msg" class="hidden bg-orange-100 text-orange-600 p-3 rounded-xl font-bold text-center border-2 border-orange-200">
+                Please put some numbers first!
+            </div>
+        </section>
+
+        <section class="w-full md:w-2/3 bg-indigo-50 rounded-3xl border-4 border-dashed border-indigo-200 flex items-center justify-center relative p-4">
+            
+            <div id="placeholder" class="text-center text-indigo-300">
+                <p class="text-6xl mb-4">📈</p>
+                <p class="text-3xl font-bold">Your graph will show here!</p>
+            </div>
+
+            <div id="graph-container" class="hidden w-full h-full flex flex-col">
+                </div>
+
+        </section>
+    </main>
+
+    <script>
+        // State
+        let selectedGraphType = null;
+        
+        // Colors mapping for logic
+        const colors = {
+            A: { bg: 'bg-red-400', text: 'text-red-600', border: 'border-red-400', hex: '#F87171' },
+            B: { bg: 'bg-blue-400', text: 'text-blue-600', border: 'border-blue-400', hex: '#60A5FA' },
+            C: { bg: 'bg-yellow-400', text: 'text-yellow-600', border: 'border-yellow-400', hex: '#FACC15' }
+        };
+
+        // UI Helpers
+        function selectType(type) {
+            selectedGraphType = type;
+            // Reset styles
+            document.querySelectorAll('.graph-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-100', 'border-indigo-500', 'text-indigo-700');
+                btn.classList.add('border-gray-200', 'text-gray-600');
+            });
+            // Highlight selected
+            const activeBtn = document.getElementById(`btn-${type}`);
+            activeBtn.classList.remove('border-gray-200', 'text-gray-600');
+            activeBtn.classList.add('bg-indigo-100', 'border-indigo-500', 'text-indigo-700');
+        }
+
+        function restartApp() {
+            document.getElementById('inputA').value = '';
+            document.getElementById('inputB').value = '';
+            document.getElementById('inputC').value = '';
+            selectedGraphType = null;
+            
+            // Reset buttons
+            document.querySelectorAll('.graph-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-100', 'border-indigo-500', 'text-indigo-700');
+                btn.classList.add('border-gray-200', 'text-gray-600');
+            });
+
+            // Reset view
+            document.getElementById('graph-container').innerHTML = '';
+            document.getElementById('graph-container').classList.add('hidden');
+            document.getElementById('placeholder').classList.remove('hidden');
+            document.getElementById('error-msg').classList.add('hidden');
+        }
+
+        function generateGraph() {
+            // 1. Get Values
+            const valA = parseInt(document.getElementById('inputA').value) || 0;
+            const valB = parseInt(document.getElementById('inputB').value) || 0;
+            const valC = parseInt(document.getElementById('inputC').value) || 0;
+            const total = valA + valB + valC;
+
+            // 2. Validation
+            const errorBox = document.getElementById('error-msg');
+            if (total === 0) {
+                errorBox.textContent = "Please put some numbers first!";
+                errorBox.classList.remove('hidden');
+                return;
+            }
+            if (!selectedGraphType) {
+                errorBox.textContent = "Please pick a graph type!";
+                errorBox.classList.remove('hidden');
+                return;
+            }
+            errorBox.classList.add('hidden');
+
+            // 3. Show Container
+            const container = document.getElementById('graph-container');
+            const placeholder = document.getElementById('placeholder');
+            placeholder.classList.add('hidden');
+            container.classList.remove('hidden');
+            container.innerHTML = ''; // Clear previous
+
+            // 4. Render Logic based on type
+            if (selectedGraphType === 'bar') renderBarGraph(valA, valB, valC, total);
+            if (selectedGraphType === 'picture') renderPictureGraph(valA, valB, valC);
+            if (selectedGraphType === 'pie') renderPieGraph(valA, valB, valC, total);
+        }
+
+        // --- RENDER FUNCTIONS ---
+
+        function renderBarGraph(a, b, c, total) {
+            const max = Math.max(a, b, c);
+            const data = [
+                { label: 'Coin A', val: a, color: colors.A.bg },
+                { label: 'Coin B', val: b, color: colors.B.bg },
+                { label: 'Coin C', val: c, color: colors.C.bg }
+            ];
+
+            let html = `<div class="flex items-end justify-around h-full w-full pb-8 pt-4 px-4 pop-in border-l-4 border-b-4 border-gray-300">`;
+            
+            data.forEach(item => {
+                // Calculate height percentage (min 10% so label fits if 0)
+                const percent = max > 0 ? (item.val / max) * 80 : 0; 
+                
+                html += `
+                    <div class="flex flex-col items-center justify-end w-1/4 h-full group">
+                        <div class="text-2xl font-bold mb-2 text-gray-600">${item.val}</div>
+                        <div style="height: ${percent}%; min-height: 10px;" class="${item.color} w-full rounded-t-xl shadow-lg transition-all duration-500 relative"></div>
+                        <div class="mt-3 text-xl font-bold text-gray-500">${item.label}</div>
+                    </div>
+                `;
+            });
+            html += `</div>
+            <div class="absolute left-2 top-1/2 -rotate-90 text-gray-400 font-bold tracking-widest origin-center">NUMBER</div>
+            `;
+            document.getElementById('graph-container').innerHTML = html;
+        }
+
+        function renderPictureGraph(a, b, c) {
+            const createRow = (label, count, colorObj) => {
+                let coins = '';
+                for(let i=0; i<count; i++) {
+                    coins += `<span class="text-4xl shadow-sm rounded-full bg-white m-1">🟡</span>`; // Using coin emoji
+                }
+                if(count === 0) coins = `<span class="text-gray-400 italic text-lg ml-2">No coins</span>`;
+
+                return `
+                    <div class="mb-4 bg-white p-3 rounded-xl shadow-sm border-2 ${colorObj.border} pop-in">
+                        <div class="flex items-center mb-2">
+                            <span class="font-bold text-xl w-24 ${colorObj.text}">${label}</span>
+                            <span class="bg-gray-100 px-3 py-1 rounded-full font-bold text-gray-600">${count}</span>
+                        </div>
+                        <div class="flex flex-wrap pl-2">
+                            ${coins}
+                        </div>
+                    </div>
+                `;
+            };
+
+            const html = `
+                <div class="h-full overflow-y-auto p-2">
+                    ${createRow('Coin A', a, colors.A)}
+                    ${createRow('Coin B', b, colors.B)}
+                    ${createRow('Coin C', c, colors.C)}
+                </div>
+            `;
+            document.getElementById('graph-container').innerHTML = html;
+        }
+
+        function renderPieGraph(a, b, c, total) {
+            // Calculate degrees
+            const degA = (a / total) * 360;
+            const degB = (b / total) * 360;
+            
+            // Conic Gradient Logic
+            // Red starts at 0, ends at degA
+            // Blue starts at degA, ends at degA + degB
+            // Yellow starts at degA + degB, ends at 360
+            const stop1 = degA;
+            const stop2 = degA + degB;
+
+            const html = `
+                <div class="flex flex-col items-center justify-center h-full pop-in">
+                    <div class="relative w-64 h-64 md:w-80 md:h-80 rounded-full shadow-2xl border-4 border-white"
+                        style="background: conic-gradient(
+                            ${colors.A.hex} 0deg ${stop1}deg, 
+                            ${colors.B.hex} ${stop1}deg ${stop2}deg, 
+                            ${colors.C.hex} ${stop2}deg 360deg
+                        );">
+                    </div>
+                    
+                    <div class="flex gap-6 mt-8 bg-white p-4 rounded-xl shadow-md">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded bg-red-400"></div>
+                            <span class="font-bold text-gray-600">A (${a})</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded bg-blue-400"></div>
+                            <span class="font-bold text-gray-600">B (${b})</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded bg-yellow-400"></div>
+                            <span class="font-bold text-gray-600">C (${c})</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('graph-container').innerHTML = html;
+        }
+    </script>
+</body>
+</html>
