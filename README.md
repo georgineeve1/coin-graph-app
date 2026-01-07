@@ -86,11 +86,3 @@ This project is open source and free to use for learning and personal projects.
 
 ---
 
-If you want, I can also:
-
-* Add screenshots to the README
-* Write a shorter version for a portfolio
-* Add comments or refactor the JS for teaching purposes
-* Turn this into a reusable component or classroom assignment
-
-Just say the word 😊
